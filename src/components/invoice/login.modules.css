@@ -1,16 +1,18 @@
-body {
+* {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
+}
+
+body {
     font-family: Arial, sans-serif;
-    background: url(./img.jpg);
+    background: url(./img.jpg) no-repeat center center fixed;
     background-size: cover;
-    background-position: center;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    overflow-y: scroll;
+    display: grid;
+    place-items: center;
+    overflow-y: auto; /* Garante rolagem */
+    padding: 20px;
 }
 
 /* Responsividade do container */
@@ -19,12 +21,11 @@ body {
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    width: 90%; /* Aumenta a largura em telas pequenas */
-    max-width: 450px; /* Mantém uma largura confortável */
+    width: 100%;
+    max-width: 450px;
     text-align: center;
-    margin: 20px 0;
+    margin: auto; /* Mantém o container centralizado */
 }
-
 
 /* Ajuste do título */
 h1 {
@@ -39,11 +40,19 @@ label {
     font-weight: bold;
 }
 
-
 /* Inputs e selects responsivos */
 select, input {
     font-size: 14px;
-    width: 90%;
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+input#nome {
+    font-size: 14px;
+    width: 95%;
     padding: 8px;
     margin-top: 5px;
     border: 1px solid #ccc;
@@ -111,13 +120,13 @@ tr:hover td {
     cursor: pointer;
 }
 
-/* Responsividade para telas menores */
+/* Responsividade para celulares */
 @media (max-width: 480px) {
     .container {
         width: 95%;
-        max-width: 400px;
+        max-width: 380px;
     }
-    
+
     h1 {
         font-size: 18px;
     }
@@ -138,8 +147,6 @@ tr:hover td {
     .container {
         width: 60%;
         max-width: 500px;
-        
-        
     }
 
     h1 {
