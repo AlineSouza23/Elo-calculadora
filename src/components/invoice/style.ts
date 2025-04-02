@@ -1,6 +1,6 @@
 import { StyleSheet } from "@react-pdf/renderer";
 
-export const styles = StyleSheet.create({
+export const estilo = StyleSheet.create({
   page: {
     backgroundColor: '#fff',
     color: '#262626',

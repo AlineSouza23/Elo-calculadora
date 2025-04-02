@@ -1,5 +1,5 @@
 import { Document, Image, Page, PDFDownloadLink, PDFViewer, Text, View } from "@react-pdf/renderer";
-import { styles } from "./style";
+import { estilo } from "./style";
 
 import logo from '../../imagens/logo.png'
 
@@ -27,21 +27,21 @@ export function Invoice() {
 
     const InvoicePDF = () => (
         <Document>
-            <Page size="A4" style={styles.page}>
-                <View style={styles.headerPdf}>
-                    <View style={styles.profileLogo}>
-                        <Image src={logo} style={styles.logo} />
+            <Page size="A4" style={estilo.page}>
+                <View style={estilo.headerPdf}>
+                    <View style={estilo.profileLogo}>
+                        <Image src={logo} style={estilo.logo} />
                         <Text>Relatório de preços</Text>
                     </View>
-                    <View style={styles.spaceY}>
-                        <Text style={styles.textBold}>Elo Serviços S.A.</Text>
+                    <View style={estilo.spaceY}>
+                        <Text style={estilo.textBold}>Elo Serviços S.A.</Text>
                         <Text>Alameda Xingu, 512, 5° e 6º andares</Text>
                         <Text>Alphaville, Barueri, SP, 06.455-030</Text>
                     </View>
                 </View>
 
-                <View style={styles.spaceX}>
-                    <Text style={styles.title}>Olá Aline</Text>
+                <View style={estilo.spaceX}>
+                    <Text style={estilo.title}>Olá Aline</Text>
                     <Text>
                         Segue as informações em PDF do relatório referente aos
                         modulo selecionado na calculadora de preços da Elo.
@@ -49,42 +49,42 @@ export function Invoice() {
                 </View>
 
                 {/* Informação do módulo */}
-                <View style={styles.spaceX}>
-                    <Text style={[styles.billTo, styles.textBold]}>Detalhes:</Text>
+                <View style={estilo.spaceX}>
+                    <Text style={[estilo.billTo, estilo.textBold]}>Detalhes:</Text>
 
-                    <View style={styles.info}>
+                    <View style={estilo.info}>
                         <Text>Módulo Selecionado:</Text>
                         <Text>Advice Stand In</Text>
                     </View>
-                    <View style={styles.info}>
+                    <View style={estilo.info}>
                         <Text>Tipo e Tier:</Text>
                         <Text>Credenciador Tier 1</Text>
                     </View>
-                    <View style={styles.info}>
+                    <View style={estilo.info}>
                         <Text>Inteligência Artificial:</Text>
                         <Text>Não</Text>
                     </View>
 
-                    <View style={styles.info}>
+                    <View style={estilo.info}>
                         <Text>Número de Customizações:</Text>
                         <Text>0</Text>
                     </View>
-                    <View style={styles.info}>
+                    <View style={estilo.info}>
                         <Text>Quantidade de Usuários:</Text>
                         <Text>0</Text>
                     </View>
-                    <View style={styles.info}>
+                    <View style={estilo.info}>
                         <Text>Datas Especiais:</Text>
                         <Text>0</Text>
                     </View>
                 </View>
 
                 {/* Render the table*/}
-                <View style={styles.table}>
+                <View style={estilo.table}>
                     {/* Cabeçalho dinâmico */}
-                    <View style={[styles.row, styles.header]}>
+                    <View style={[estilo.row, estilo.header]}>
                         {columns.map((col) => (
-                            <Text key={col.key} style={[styles.cell, styles.boldText]}>
+                            <Text key={col.key} style={[estilo.cell, estilo.boldText]}>
                                 {col.label}
                             </Text>
                         ))}
@@ -92,9 +92,9 @@ export function Invoice() {
 
                     {/* Linhas da tabela */}
                     {data.map((item, index) => (
-                        <View key={item.id} style={[styles.row, index % 2 === 0 ? styles.evenRow : styles.row]}>
+                        <View key={item.id} style={[estilo.row, index % 2 === 0 ? estilo.evenRow : estilo.row]}>
                             {columns.map((col) => (
-                                <Text key={col.key} style={styles.cell}>
+                                <Text key={col.key} style={estilo.cell}>
                                     {item[col.key as keyof ItemType]}
                                 </Text>
                             ))}
@@ -103,8 +103,8 @@ export function Invoice() {
                 </View>
 
                 {/* Rodapé */}
-                <View style={styles.footer}>
-                    <Text style={styles.footerText}>© 2025 Elo Serviços S.A.</Text>       
+                <View style={estilo.footer}>
+                    <Text style={estilo.footerText}>© 2025 Elo Serviços S.A.</Text>       
                 </View>
             </Page>
         </Document>

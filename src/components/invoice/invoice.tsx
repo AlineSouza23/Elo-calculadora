@@ -1,18 +1,24 @@
-import { useState } from "react";
-import { jsPDF } from "jspdf";
+import React, { useState } from "react";
+import "jspdf-autotable";
+import styles from './teste.module.css';
+import { Document, Image, Page, Text, View, pdf } from "@react-pdf/renderer"; // Importação de pdf do react-pdf
+import { estilo } from "./style";
+import logo from '../../imagens/logo.png';
 
-
-const App = () => {
-  // Estado para os valores selecionados nos campos
-  const [modulo, setModulo] = useState<string>('0');
-  const [tipoTier, setTipoTier] = useState<string>('Credenciador Tier 1');
-  const [inteligenciaArtificial, setInteligenciaArtificial] = useState<string>('nao');
-  const [numCustomizacoes, setNumCustomizacoes] = useState<string>('0');
+const CalculadoraPreco: React.FC = () => {
+  const [modulo, setModulo] = useState<string>("0");
+  const [tipoTier, setTipoTier] = useState<string>("Credenciador Tier 1");
+  const [inteligenciaArtificial, setInteligenciaArtificial] = useState<string>("nao");
+  const [numCustomizacoes, setNumCustomizacoes] = useState<string>("0");
   const [numUsuarios, setNumUsuarios] = useState<number>(0);
-  const [dataEspecial, setDataEspecial] = useState<string>('0');
-  const [nome, setNome] = useState<string>('');
+  const [dataEspecial, setDataEspecial] = useState<string>("0");
+  const [precos, setPrecos] = useState<any>({
+    valor6: "R$ 0,00",
+    valor12: "R$ 0,00",
+    valor24: "R$ 0,00",
+    valor36: "R$ 0,00",
+  });
 
-  // Tabela de preços base
   const precosBase: { [key: string]: number[] } = {
     "Autorização": [7000, 14000, 21000, 28000, 35000, 42000, 49000],
     "Liquidação": [7000, 14000, 21000, 28000, 35000, 42000, 49000],
@@ -23,33 +29,27 @@ const App = () => {
     "3DS": [1500, 3000, 4500, 6000, 7500, 9000, 10500],
     "Advice Stand In": [1500, 3000, 4500, 6000, 7500, 9000, 10500],
     "Stand In": [1500, 3000, 4500, 6000, 7500, 9000, 10500],
-    "HUB QR Code": [1500, 3000, 4500, 6000, 7500, 9000, 10500]
+    "HUB QR Code": [1500, 3000, 4500, 6000, 7500, 9000, 10500],
   };
 
   const descontosFidelidade = { 6: 0.03, 12: 0.10, 24: 0.20, 36: 0.25 };
   const descontoDatasEspeciais = 0.35;
   const precosIA = [500, 750, 800, 1000, 1250, 1500, 1800];
-  const valoresCustomizacao : Record<string, number[]> = {
+  const valoresCustomizacao: Record<string, number[]> = {
     "Credenciador": [100, 150, 200, 250, 300, 350, 400],
-    "Emissor": [200, 250, 300, 350, 400, 500, 550]
+    "Emissor": [200, 250, 300, 350, 400, 500, 550],
   };
 
-  const fatoresMultiplicativos:  Record<string, number> = {
+  const fatoresMultiplicativos: Record<string, number> = {
     "1": 1.25, "2-3": 1.5, "4-6": 1.75, "7": 2, "8": 2.25,
     "9": 2.5, "10": 2.75, "11": 3, "12": 3.25, "13": 3.5,
     "14": 3.75, "15": 4, "16": 4.25, "17": 4.5, "18": 4.75,
     "19": 5, "20": 5.25
   };
 
-  // Estado para os valores de preço calculados
-  const [preco6, setPreco6] = useState<string>('R$ 0,00');
-  const [preco12, setPreco12] = useState<string>('R$ 0,00');
-  const [preco24, setPreco24] = useState<string>('R$ 0,00');
-  const [preco36, setPreco36] = useState<string>('R$ 0,00');
-
-  const handleCalcularPreco = () => {
-    const tipo = tipoTier.split(' ')[0]; // Credenciador ou Emissor
-    const tier = parseInt(tipoTier.split(' ')[2]) || 1;
+  const calcularPreco = () => {
+    const tipo = tipoTier.split(" ")[0];
+    const tier = parseInt(tipoTier.split(" ")[1]) || 1;
 
     if (!precosBase[modulo]) {
       alert("Módulo não encontrado");
@@ -61,11 +61,11 @@ const App = () => {
       return;
     }
 
-    let precoBase = precosBase[modulo][tier - 1] || 0; 
+    let precoBase = precosBase[modulo][tier - 1] || 0;
     let precoFinal = precoBase;
 
     if (inteligenciaArtificial === "sim") {
-      precoFinal += precosIA[tier - 1] || 0; 
+      precoFinal += precosIA[tier - 1] || 0;
     }
 
     if (numUsuarios > 0) {
@@ -73,106 +73,221 @@ const App = () => {
     }
 
     if (numCustomizacoes !== "0" && valoresCustomizacao[tipo]) {
-        const numCustomizacoesInt = parseInt(numCustomizacoes, 10);
-        const tipoKey = tipo as keyof typeof valoresCustomizacao;
-      
-        if (valoresCustomizacao[tipoKey]) {
-          let valorCustomizacao = valoresCustomizacao[tipoKey][tier - 1] || 0;
-          let fatorMultiplicativo = fatoresMultiplicativos[numCustomizacoesInt.toString()] || 1;
-          precoFinal += valorCustomizacao * fatorMultiplicativo;
-        }
+      let valorCustomizacao = valoresCustomizacao[tipo][tier - 1] || 0;
+      let fatorMultiplicativo = fatoresMultiplicativos[numCustomizacoes] || 1;
+      precoFinal += valorCustomizacao * fatorMultiplicativo;
     }
 
-    let precoComDesconto = precoFinal - (precoFinal * descontoDatasEspeciais);
+    let descontoTotal = 0;
+    if (dataEspecial !== "0") descontoTotal += descontoDatasEspeciais;
 
-    // Atualizar os estados com os preços calculados
-    setPreco6(`R$ ${(precoComDesconto - (precoComDesconto * descontosFidelidade[6] || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-    setPreco12(`R$ ${(precoComDesconto - (precoComDesconto * descontosFidelidade[12] || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-    setPreco24(`R$ ${(precoComDesconto - (precoComDesconto * descontosFidelidade[24] || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-    setPreco36(`R$ ${(precoComDesconto - (precoComDesconto * descontosFidelidade[36] || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+    const precoComDesconto = precoFinal - (precoFinal * descontoTotal);
+
+    setPrecos({
+      valor6: `R$ ${Math.round(precoComDesconto - (precoComDesconto * descontosFidelidade[6] || 0))
+        .toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+
+      valor12: `R$ ${Math.round(precoComDesconto - (precoComDesconto * descontosFidelidade[12] || 0))
+        .toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+
+      valor24: `R$ ${Math.round(precoComDesconto - (precoComDesconto * descontosFidelidade[24] || 0))
+        .toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+
+      valor36: `R$ ${Math.round(precoComDesconto - (precoComDesconto * descontosFidelidade[36] || 0))
+        .toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    });
+
   };
 
-  const handleGerarPDF = () => {
+  const gerarPDF = () => {
+    const nome = (document.getElementById("nome") as HTMLInputElement).value.trim();
     if (nome === "") {
       alert("Por favor, digite um nome antes de gerar o PDF.");
       return;
     }
+    const InvoicePDF = () => (
+      <Document>
+        <Page size="A4" style={estilo.page}>
+          <View style={estilo.headerPdf}>
+            <View style={estilo.profileLogo}>
+              <Image src={logo} style={estilo.logo} />
+              <Text>Relatório de preços</Text>
+            </View>
+            <View style={estilo.spaceY}>
+              <Text style={estilo.textBold}>Elo Serviços S.A.</Text>
+              <Text>Alameda Xingu, 512, 5° e 6º andares</Text>
+              <Text>Alphaville, Barueri, SP, 06.455-030</Text>
+            </View>
+          </View>
 
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text("\nRelatório de Preços", 80, 2);
-    doc.text(`Olá ${nome}\nSegue abaixo os valores relacionados ao módulo escolhido!`, 20, 20);
+          <View style={estilo.spaceX}>
+            <Text style={estilo.title}>Olá {nome}</Text>
+            <Text>
+              Segue as informações em PDF do relatório referente aos
+              modulo selecionado na calculadora de preços da Elo.
+            </Text>
+          </View>
 
-    doc.setFontSize(12);
-    doc.text(`Módulo Selecionado: ${modulo}`, 10, 50);
-    doc.text(`Tipo e Tier: ${tipoTier}`, 10, 60);
-    doc.text(`Inteligência Artificial: ${inteligenciaArtificial}`, 10, 70);
-    doc.text(`Número de Customizações: ${numCustomizacoes}`, 10, 80);
-    doc.text(`Quantidade de Usuários: ${numUsuarios}`, 10, 90);
-    doc.text(`Datas Especiais: ${dataEspecial}`, 10, 100);
+          {/* Informações do módulo */}
+          <View style={estilo.spaceX}>
+            <Text style={[estilo.billTo, estilo.textBold]}>Detalhes:</Text>
 
-    const valores = [
-      ["6 meses", preco6],
-      ["12 meses", preco12],
-      ["24 meses", preco24],
-      ["36 meses", preco36]
-    ];
+            <View style={estilo.info}>
+              <Text>Módulo Selecionado:</Text>
+              <Text>{modulo}</Text>
+            </View>
+            <View style={estilo.info}>
+              <Text>Tipo e Tier:</Text>
+              <Text>{tipoTier}</Text>
+            </View>
+            <View style={estilo.info}>
+              <Text>Inteligência Artificial:</Text>
+              <Text>{inteligenciaArtificial === "sim" ? "Sim" : "Não"}</Text>
+            </View>
 
-    valores.forEach((valor, index) => {
-      doc.text(`${valor[0]}: ${valor[1]}`, 10, 110 + (index * 10));
-    });
+            <View style={estilo.info}>
+              <Text>Número de Customizações:</Text>
+              <Text>{numCustomizacoes}</Text>
+            </View>
+            <View style={estilo.info}>
+              <Text>Quantidade de Usuários:</Text>
+              <Text>{numUsuarios}</Text>
+            </View>
+            <View style={estilo.info}>
+              <Text>Datas Especiais:</Text>
+              <Text>{dataEspecial}</Text>
+            </View>
+          </View>
 
-    doc.save("calculo_preco.pdf");
+          {/* Tabela de preços */}
+          <View style={estilo.table}>
+            <View style={[estilo.row, estilo.header]}>
+              <Text style={[estilo.cell, estilo.boldText]}>Período de Contrato</Text>
+              <Text style={[estilo.cell, estilo.boldText]}>Valor Mensal</Text>
+            </View>
+            <View style={estilo.row}>
+              <Text style={estilo.cell}>6 meses</Text>
+              <Text style={estilo.cell}>{precos.valor6}</Text>
+            </View>
+            <View style={estilo.row}>
+              <Text style={estilo.cell}>12 meses</Text>
+              <Text style={estilo.cell}>{precos.valor12}</Text>
+            </View>
+            <View style={estilo.row}>
+              <Text style={estilo.cell}>24 meses</Text>
+              <Text style={estilo.cell}>{precos.valor24}</Text>
+            </View>
+            <View style={estilo.row}>
+              <Text style={estilo.cell}>36 meses</Text>
+              <Text style={estilo.cell}>{precos.valor36}</Text>
+            </View>
+          </View>
+
+          {/* Rodapé */}
+          <View style={estilo.footer}>
+            <Text style={estilo.footerText}>© 2025 Elo Serviços S.A.</Text>
+          </View>
+        </Page>
+      </Document>
+    );
+
+      // Gerar o PDF programaticamente e forçar o download
+      pdf(<InvoicePDF />).toBlob().then((blob) => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = "relatorio_precos.pdf";
+        link.click();
+      });
+   
   };
 
   return (
-    <div className="container">
+    <div className={styles.container}>
       <h1>Calculadora de Preços</h1>
-
-      {/* Campos de seleção */}
-      <label htmlFor="modulo">Módulo:</label>
-      <select id="modulo" value={modulo} onChange={e => setModulo(e.target.value)}>
+      <label>Módulo:</label>
+      <select value={modulo} onChange={(e) => setModulo(e.target.value)}>
         <option value="0">Nenhum</option>
         <option value="3DS">3DS</option>
         <option value="Advice Stand In">Advice Stand In</option>
-        {/* Outros módulos */}
+        <option value="Autorização">Autorização</option>
+        <option value="Autorizado Pendente de Liquidação">Autorizado Pendente de Liquidação</option>
+        <option value="Fluxo de Disputa">Fluxo de Disputa</option>
+        <option value="Fraude">Fraude</option>
+        <option value="HUB QR Code">HUB QR Code</option>
+        <option value="Liquidação">Liquidação</option>
+        <option value="Rejeições">Rejeições</option>
+        <option value="Stand In">Stand In</option>
       </select>
 
-      <label htmlFor="tipoTier">Tipo e Tier:</label>
-      <select id="tipoTier" value={tipoTier} onChange={e => setTipoTier(e.target.value)}>
-        <option value="Credenciador Tier 1">Credenciador Tier 1</option>
-        <option value="Credenciador Tier 2">Credenciador Tier 2</option>
-        {/* Outros tipos */}
+      <label>Tipo e Tier:</label>
+      <select value={tipoTier} onChange={(e) => setTipoTier(e.target.value)}>
+        <option value="Credenciador 1">Credenciador 1</option>
+        <option value="Credenciador 2">Credenciador 2</option>
+        <option value="Credenciador 3">Credenciador 3</option>
+        <option value="Credenciador 4">Credenciador 4</option>
+        <option value="Credenciador 5">Credenciador 5</option>
+        <option value="Credenciador 6">Credenciador 6</option>
+        <option value="Credenciador 7">Credenciador 7</option>
+        <option value="Emissor 1">Emissor 1</option>
+        <option value="Emissor 2">Emissor 2</option>
+        <option value="Emissor 3">Emissor 3</option>
+        <option value="Emissor 4">Emissor 4</option>
+        <option value="Emissor 5">Emissor 5</option>
+        <option value="Emissor 6">Emissor 6</option>
+        <option value="Emissor 7">Emissor 7</option>
       </select>
 
-      <label htmlFor="inteligenciaArtificial">Adicionar Inteligência Artificial:</label>
-      <select id="inteligenciaArtificial" value={inteligenciaArtificial} onChange={e => setInteligenciaArtificial(e.target.value)}>
+      <label>Adicionar Inteligência Artificial:</label>
+      <select value={inteligenciaArtificial} onChange={(e) => setInteligenciaArtificial(e.target.value)}>
         <option value="nao">Não</option>
         <option value="sim">Sim</option>
       </select>
 
-      <label htmlFor="numCustomizacoes">Número de Customizações:</label>
-      <select id="numCustomizacoes" value={numCustomizacoes} onChange={e => setNumCustomizacoes(e.target.value)}>
-        <option value="0">0</option>
+      <label>Número de Customizações:</label>
+      <select value={numCustomizacoes} onChange={(e) => setNumCustomizacoes(e.target.value)}>
+        <option value="0">Selecione o número de customizações</option>
         <option value="1">1</option>
-        {/* Outros valores */}
+        <option value="2-3">2-3</option>
+        <option value="4-6">4-6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+        <option value="11">11</option>
+        <option value="12">12</option>
+        <option value="13">13</option>
+        <option value="14">14</option>
+        <option value="15">15</option>
+        <option value="16">16</option>
+        <option value="17">17</option>
+        <option value="18">18</option>
+        <option value="19">19</option>
+        <option value="20">20</option>
       </select>
 
-      <label htmlFor="numUsuarios">Quantidade de Usuários:</label>
-      <select id="numUsuarios" value={numUsuarios} onChange={e => setNumUsuarios(parseInt(e.target.value))}>
-        <option value="0">0</option>
+      <label>Quantidade de Usuários: </label>
+      <select value={numUsuarios} onChange={(e) => setNumUsuarios(Number(e.target.value))}>
+        <option value="0">Selecione o número de usuários</option>
         <option value="1">1</option>
-        {/* Outros valores */}
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
       </select>
 
-      <label htmlFor="dataEspecial">Datas Especiais:</label>
-      <select id="dataEspecial" value={dataEspecial} onChange={e => setDataEspecial(e.target.value)}>
+      <label>Datas Especiais:</label>
+      <select value={dataEspecial} onChange={(e) => setDataEspecial(e.target.value)}>
         <option value="0">Nenhuma</option>
         <option value="diaDasMaes">Semana do Dia das Mães</option>
-        {/* Outros valores */}
+        <option value="diaDasCriancas">Semana do Dia das Crianças</option>
+        <option value="blackFriday">Semana da Black Friday</option>
+        <option value="natal">Semana do Natal</option>
       </select>
-
-      {/* Tabela de resultados */}
       <table>
         <thead>
           <tr>
@@ -183,35 +298,30 @@ const App = () => {
         <tbody>
           <tr>
             <td>6 meses</td>
-            <td>{preco6}</td>
+            <td>{precos.valor6}</td>
           </tr>
           <tr>
             <td>12 meses</td>
-            <td>{preco12}</td>
+            <td>{precos.valor12}</td>
           </tr>
           <tr>
             <td>24 meses</td>
-            <td>{preco24}</td>
+            <td>{precos.valor24}</td>
           </tr>
           <tr>
             <td>36 meses</td>
-            <td>{preco36}</td>
+            <td>{precos.valor36}</td>
           </tr>
         </tbody>
       </table>
+      
+      <input type="text" id="nome" placeholder="Digite o nome do parceiro" required className={styles.container} />
 
-      <input
-        type="text"
-        id="nome"
-        value={nome}
-        placeholder="Digite o nome do parceiro"
-        onChange={e => setNome(e.target.value)}
-      />
-
-      <button onClick={handleCalcularPreco}>Calcular Preço</button>
-      <button onClick={handleGerarPDF}>Gerar PDF</button>
+      
+      <button onClick={calcularPreco}>Calcular Preço</button>
+      <button onClick={gerarPDF}>Gerar PDF</button>
     </div>
   );
 };
 
-export default App;
+export default CalculadoraPreco;

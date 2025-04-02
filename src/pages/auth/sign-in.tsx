@@ -5,6 +5,7 @@ import CryptoJS from "crypto-js";
 import { useNavigate } from "react-router";
 import { styles } from "./style"; // Certifique-se de que o caminho está correto
 
+
 const signInForm = z.object({
     email: z.string().email(),
     password: z.string(),
