@@ -120,7 +120,7 @@ tr:hover td {
     cursor: pointer;
 }
 
-/* Responsividade para celulares */
+/* Responsividade para celulares 
 @media (max-width: 480px) {
     .container {
         width: 95%;
@@ -140,7 +140,7 @@ tr:hover td {
         font-size: 14px;
         padding: 12px;
     }
-}
+}*/
 
 /* Responsividade para tablets */
 @media (max-width: 1280px) {

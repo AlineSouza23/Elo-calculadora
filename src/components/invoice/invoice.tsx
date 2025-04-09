@@ -7,10 +7,11 @@ import logo from '../../imagens/logo.png';
 
 const CalculadoraPreco: React.FC = () => {
   const [modulo, setModulo] = useState<string>("0");
+  const [nome, setNome] = useState<string>('');
   const [tipoTier, setTipoTier] = useState<string>("Credenciador Tier 1");
-  const [inteligenciaArtificial, setInteligenciaArtificial] = useState<string>("nao");
   const [numCustomizacoes, setNumCustomizacoes] = useState<string>("0");
   const [numUsuarios, setNumUsuarios] = useState<number>(0);
+  const [valorAdicional, setValorAdicional] = useState<number>(0);
   const [dataEspecial, setDataEspecial] = useState<string>("0");
   const [precos, setPrecos] = useState<any>({
     valor6: "R$ 0,00",
@@ -34,7 +35,6 @@ const CalculadoraPreco: React.FC = () => {
 
   const descontosFidelidade = { 6: 0.03, 12: 0.10, 24: 0.20, 36: 0.25 };
   const descontoDatasEspeciais = 0.35;
-  const precosIA = [500, 750, 800, 1000, 1250, 1500, 1800];
   const valoresCustomizacao: Record<string, number[]> = {
     "Credenciador": [100, 150, 200, 250, 300, 350, 400],
     "Emissor": [200, 250, 300, 350, 400, 500, 550],
@@ -64,9 +64,7 @@ const CalculadoraPreco: React.FC = () => {
     let precoBase = precosBase[modulo][tier - 1] || 0;
     let precoFinal = precoBase;
 
-    if (inteligenciaArtificial === "sim") {
-      precoFinal += precosIA[tier - 1] || 0;
-    }
+
 
     if (numUsuarios > 0) {
       precoFinal += (numUsuarios <= 5) ? 700 : 700 + (numUsuarios - 5) * 100;
@@ -83,20 +81,21 @@ const CalculadoraPreco: React.FC = () => {
 
     const precoComDesconto = precoFinal - (precoFinal * descontoTotal);
 
+    const precoComValorAdicional = precoComDesconto - (precoComDesconto * valorAdicional / 100);
+
     setPrecos({
-      valor6: `R$ ${Math.round(precoComDesconto - (precoComDesconto * descontosFidelidade[6] || 0))
+      valor6: `R$ ${Math.round(precoComValorAdicional - (precoComValorAdicional * descontosFidelidade[6] || 0))
         .toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
 
-      valor12: `R$ ${Math.round(precoComDesconto - (precoComDesconto * descontosFidelidade[12] || 0))
+      valor12: `R$ ${Math.round(precoComValorAdicional - (precoComValorAdicional * descontosFidelidade[12] || 0))
         .toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
 
-      valor24: `R$ ${Math.round(precoComDesconto - (precoComDesconto * descontosFidelidade[24] || 0))
+      valor24: `R$ ${Math.round(precoComValorAdicional - (precoComValorAdicional * descontosFidelidade[24] || 0))
         .toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
 
-      valor36: `R$ ${Math.round(precoComDesconto - (precoComDesconto * descontosFidelidade[36] || 0))
+      valor36: `R$ ${Math.round(precoComValorAdicional - (precoComValorAdicional * descontosFidelidade[36] || 0))
         .toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     });
-
   };
 
   const gerarPDF = () => {
@@ -121,10 +120,10 @@ const CalculadoraPreco: React.FC = () => {
           </View>
 
           <View style={estilo.spaceX}>
-            <Text style={estilo.title}>Olá {nome}</Text>
             <Text>
-              Segue as informações em PDF do relatório referente aos
-              modulo selecionado na calculadora de preços da Elo.
+              Segue as informações em PDF do relatório referente ao
+              módulo selecionado na calculadora de preços da Elo para <Text style={[estilo.billTo, estilo.textBold]}>{nome}</Text>
+
             </Text>
           </View>
 
@@ -139,10 +138,6 @@ const CalculadoraPreco: React.FC = () => {
             <View style={estilo.info}>
               <Text>Tipo e Tier:</Text>
               <Text>{tipoTier}</Text>
-            </View>
-            <View style={estilo.info}>
-              <Text>Inteligência Artificial:</Text>
-              <Text>{inteligenciaArtificial === "sim" ? "Sim" : "Não"}</Text>
             </View>
 
             <View style={estilo.info}>
@@ -191,14 +186,14 @@ const CalculadoraPreco: React.FC = () => {
       </Document>
     );
 
-      // Gerar o PDF programaticamente e forçar o download
-      pdf(<InvoicePDF />).toBlob().then((blob) => {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = "relatorio_precos.pdf";
-        link.click();
-      });
-   
+    // Gerar o PDF programaticamente e forçar o download
+    pdf(<InvoicePDF />).toBlob().then((blob) => {
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = "relatorio_precos.pdf";
+      link.click();
+    });
+
   };
 
   return (
@@ -237,11 +232,6 @@ const CalculadoraPreco: React.FC = () => {
         <option value="Emissor 7">Emissor 7</option>
       </select>
 
-      <label>Adicionar Inteligência Artificial:</label>
-      <select value={inteligenciaArtificial} onChange={(e) => setInteligenciaArtificial(e.target.value)}>
-        <option value="nao">Não</option>
-        <option value="sim">Sim</option>
-      </select>
 
       <label>Número de Customizações:</label>
       <select value={numCustomizacoes} onChange={(e) => setNumCustomizacoes(e.target.value)}>
@@ -287,7 +277,9 @@ const CalculadoraPreco: React.FC = () => {
         <option value="diaDasCriancas">Semana do Dia das Crianças</option>
         <option value="blackFriday">Semana da Black Friday</option>
         <option value="natal">Semana do Natal</option>
+
       </select>
+
       <table>
         <thead>
           <tr>
@@ -312,12 +304,27 @@ const CalculadoraPreco: React.FC = () => {
             <td>36 meses</td>
             <td>{precos.valor36}</td>
           </tr>
-        </tbody>
-      </table>
-      
-      <input type="text" id="nome" placeholder="Digite o nome do parceiro" required className={styles.container} />
 
-      
+        </tbody>
+
+      </table>
+      <label>Valor Adicional (%):</label> {/* Novo campo para o valor adicional */}
+      <input
+        type="number"
+        value={valorAdicional}
+        onChange={(e) => setValorAdicional(Number(e.target.value))}
+        placeholder="Digite o valor adicional (%)"
+      />
+      <label>Digite o nome do parceiro:</label> {/* Novo campo para o valor adicional */}
+     <input
+        type="text"
+        id="nome"
+        value={nome}
+        placeholder="Digite o nome do parceiro"
+        onChange={e => setNome(e.target.value)}
+      />
+
+
       <button onClick={calcularPreco}>Calcular Preço</button>
       <button onClick={gerarPDF}>Gerar PDF</button>
     </div>
